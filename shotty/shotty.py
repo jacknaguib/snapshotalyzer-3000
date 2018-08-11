@@ -28,7 +28,10 @@ def snapshots():
 @click.option('--project', default=None,
    help="Only snapshots for project (tag Project:<name>)")
 
-def list_snapshots(project):
+@click.option('--all', 'list_all', default=False, is_flag=True,
+   help="list all snapshots for all volumes, not just the most recent")
+
+def list_snapshots(project, list_all):
     "List EC2 snapshots"
 
     instances = filter_instances(project)
@@ -44,6 +47,7 @@ def list_snapshots(project):
                      s.progress,
                      s.start_time.strftime("%c")
                 )))
+                if s.state == 'completed' and not list_all: break
     return
 
 
@@ -88,7 +92,6 @@ def create_snapshots(project):
 
     for i in instances:
        print("Stopping {0}".format(i.id))
-
        i.stop()
        i.wait_until_stopped()
 
@@ -97,7 +100,6 @@ def create_snapshots(project):
           v.create_snapshot(Description="Created by snapshotalyzer 3000")
 
        print("Starting {0}".format(i.id))
-
        i.start()
        i.wait_until_running()
     print("Job's done!")
